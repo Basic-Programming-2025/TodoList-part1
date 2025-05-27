@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>일정 등록 테스트</title>
+</head>
+<body>
+  <h2>✅ 일정 등록</h2>
+  <form id="add-form">
+    날짜: <input type="date" id="date"><br>
+    제목: <input type="text" id="title"><br>
+    내용: <input type="text" id="desc"><br>
+    마감 시간: <input type="datetime-local" id="deadline"><br>
+    <button type="submit">등록</button>
+  </form>
+
+  <h2>✏️ 일정 수정</h2>
+  <form id="update-form">
+    수정할 인덱스(ID): <input type="number" id="update-id"><br>
+    새 제목: <input type="text" id="update-title"><br>
+    새 내용: <input type="text" id="update-desc"><br>
+    <button type="submit">수정</button>
+  </form>
+
+  <h2>🗑 일정 삭제</h2>
+  <form id="delete-form">
+    삭제할 인덱스(ID): <input type="number" id="delete-id"><br>
+    <button type="submit">삭제</button>
+  </form>
+
+  <h2>📋 현재 등록된 일정</h2>
+  <ul id="task-list"></ul>
+
+  <script>
+    function loadTasks() {
+      fetch("http://127.0.0.1:5000/tasks")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("task-list");
+          list.innerHTML = "";
+          data.forEach((task, index) => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>[${index}] ${task.title}</strong> (${task.date}) - ${task.desc} <br> 마감: ${task.deadline}`;
+            list.appendChild(li);
+          });
+        });
+    }
+
+    // 등록
+    document.getElementById("add-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      fetch("http://127.0.0.1:5000/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: document.getElementById("date").value,
+          title: document.getElementById("title").value,
+          desc: document.getElementById("desc").value,
+          deadline: document.getElementById("deadline").value
+        })
+      }).then(res => res.json()).then(() => loadTasks());
+    });
+
+    // 수정
+    document.getElementById("update-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const id = document.getElementById("update-id").value;
+      fetch(`http://127.0.0.1:5000/update/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: document.getElementById("update-title").value,
+          desc: document.getElementById("update-desc").value
+        })
+      }).then(res => res.json()).then(() => loadTasks());
+    });
+
+    // 삭제
+    document.getElementById("delete-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const id = document.getElementById("delete-id").value;
+      fetch(`http://127.0.0.1:5000/delete/${id}`, {
+        method: "DELETE"
+      }).then(res => res.json()).then(() => loadTasks());
+    });
+
+    // 최초 로딩 시 일정 불러오기
+    window.onload = loadTasks;
+  </script>
+</body>
+</html>
